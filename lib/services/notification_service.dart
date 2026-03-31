@@ -100,7 +100,7 @@ class NotificationService {
           ledColor: Colors.blue,
           enableVibration: true,
           playSound: true,
-          soundSource: 'resource://raw/notification',
+          // soundSource: 'resource://raw/notification',
           criticalAlerts: true,
           locked: true,
           defaultRingtoneType: DefaultRingtoneType.Alarm,
