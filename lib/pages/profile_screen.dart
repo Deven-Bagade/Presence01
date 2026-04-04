@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'timetable_history_screen.dart'; // ✅ IMPORT ADDED
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -71,7 +71,15 @@ class ProfileScreen extends StatelessWidget {
           _buildTile(
             icon: Icons.history,
             title: "Attendance History",
-            onTap: () {},
+            onTap: () {
+              // ✅ FIXED: Navigates to global timetable history
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TimetableHistoryScreen(),
+                ),
+              );
+            },
           ),
           _buildTile(
             icon: Icons.share,
@@ -116,7 +124,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-// Share App Feature (Public APK - No Play Store)
   Future<void> _shareApp(BuildContext context) async {
     try {
       const String apkUrl =
@@ -139,8 +146,6 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-
-  // 2. Rate Us Feature
   Future<void> _showRatingDialog(BuildContext context) async {
     final ratingController = TextEditingController();
     double selectedRating = 0.0;
@@ -159,7 +164,6 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     const Text('How would you rate your experience?'),
                     const SizedBox(height: 16),
-                    // Star Rating
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (index) {
@@ -180,7 +184,6 @@ class ProfileScreen extends StatelessWidget {
                       }),
                     ),
                     const SizedBox(height: 16),
-                    // Feedback Text
                     TextField(
                       controller: ratingController,
                       maxLines: 3,
@@ -221,8 +224,7 @@ class ProfileScreen extends StatelessWidget {
 
                     if (context.mounted) {
                       Navigator.pop(context);
-                      // Ask to rate on store
-                      _askToRateOnStore(context);
+                      // ✅ FIXED: Removed the ask to rate on Play Store popup here
                     }
                   },
                   child: isSubmitting
@@ -259,8 +261,8 @@ class ProfileScreen extends StatelessWidget {
         'rating': rating,
         'feedback': feedback,
         'timestamp': FieldValue.serverTimestamp(),
-        'appVersion': '1.0.0', // You can get this from package_info
-        'platform': 'Android', // You can detect platform
+        'appVersion': '1.0.0',
+        'platform': 'Android',
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -279,41 +281,6 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _askToRateOnStore(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Rate on Play Store'),
-        content: const Text(
-          'Would you like to rate Attendigo on the Play Store? '
-              'This helps other users discover our app!',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Not Now'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _launchPlayStore();
-            },
-            child: const Text('Rate Now'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _launchPlayStore() async {
-    final url = Uri.parse(
-        'https://play.google.com/store/apps/details?id=com.attendigo.app');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
-  }
-
-  // 3. Suggest a Feature Feature
   Future<void> _showFeatureSuggestionDialog(BuildContext context) async {
     final suggestionController = TextEditingController();
     bool isSubmitting = false;
@@ -330,8 +297,7 @@ class ProfileScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Have an idea to improve Attendigo? '
-                          'We\'d love to hear it!',
+                      'Have an idea to improve Attendigo? We\'d love to hear it!',
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
@@ -406,10 +372,8 @@ class ProfileScreen extends StatelessWidget {
         'userEmail': userEmail,
         'suggestion': suggestion,
         'timestamp': FieldValue.serverTimestamp(),
-        'status': 'pending', // pending, reviewed, implemented, rejected
+        'status': 'pending',
         'votes': 0,
-        'upvotes': [],
-        'downvotes': [],
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -428,7 +392,6 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  // Logout Feature
   Future<void> _showLogoutDialog(BuildContext context) async {
     await showDialog(
       context: context,
@@ -444,12 +407,7 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () async {
               Navigator.pop(context);
               await FirebaseAuth.instance.signOut();
-              // Navigate to login screen
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/',
-                    (route) => false,
-              );
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Logout'),

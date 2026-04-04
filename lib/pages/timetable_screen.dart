@@ -1094,6 +1094,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
             },
             child: Container(
               padding: const EdgeInsets.all(4),
+              // 1. ADD THIS LINE: It cuts off any text that spills outside the box visually
+              clipBehavior: Clip.hardEdge,
               decoration: BoxDecoration(
                 color: isSelected
                     ? (isFirstSelected
@@ -1108,60 +1110,63 @@ class _TimetableScreenState extends State<TimetableScreen> {
                   width: isSelected ? 2 : 1,
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          occurrence['subject'] ?? '',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected
-                                ? (isFirstSelected ? _swapFirstColor : _swapSecondColor)
-                                : _textPrimary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                      if (_swapMode && isSelected)
-                        CircleAvatar(
-                          backgroundColor: isFirstSelected ? _swapFirstColor : _swapSecondColor,
-                          radius: 6,
+              // 2. ADD THIS WRAPPER: It gives the Column infinite vertical space so it never throws a RenderFlex error
+              child: SingleChildScrollView(
+                physics: const NeverScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
                           child: Text(
-                            isFirstSelected ? "1" : "2",
-                            style: TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.bold),
+                            occurrence['subject'] ?? '',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected
+                                  ? (isFirstSelected ? _swapFirstColor : _swapSecondColor)
+                                  : _textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                         ),
-                    ],
-                  ),
-                  if (occurrence['occurrenceRoom'] != null)
-                    Text(
-                      occurrence['occurrenceRoom'] ?? '',
-                      style: TextStyle(
-                        fontSize: 9,
-                        color: isSelected
-                            ? (isFirstSelected ? _swapFirstColor : _swapSecondColor)
-                            : _textSecondary,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+                        if (_swapMode && isSelected)
+                          CircleAvatar(
+                            backgroundColor: isFirstSelected ? _swapFirstColor : _swapSecondColor,
+                            radius: 6,
+                            child: Text(
+                              isFirstSelected ? "1" : "2",
+                              style: const TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                      ],
                     ),
-                  // 🆕 Show occurrence index if multiple
-                  if (occurrence['occurrenceCount'] != null && occurrence['occurrenceCount'] > 1)
-                    Text(
-                      "Occ ${(occurrenceIndex + 1)}",
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: isSelected
-                            ? (isFirstSelected ? _swapFirstColor : _swapSecondColor)
-                            : _textSecondary.withOpacity(0.7),
+                    if (occurrence['occurrenceRoom'] != null)
+                      Text(
+                        occurrence['occurrenceRoom'] ?? '',
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: isSelected
+                              ? (isFirstSelected ? _swapFirstColor : _swapSecondColor)
+                              : _textSecondary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
-                    ),
-                ],
+                    if (occurrence['occurrenceCount'] != null && occurrence['occurrenceCount'] > 1)
+                      Text(
+                        "Occ ${(occurrenceIndex + 1)}",
+                        style: TextStyle(
+                          fontSize: 8,
+                          color: isSelected
+                              ? (isFirstSelected ? _swapFirstColor : _swapSecondColor)
+                              : _textSecondary.withOpacity(0.7),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),

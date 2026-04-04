@@ -24,7 +24,7 @@ class NotificationService {
   static const String _prefScheduledNotifications = 'scheduled_notifications';
 
   // Default values
-  static const int _defaultReminderMinutes = 15;
+  static const int _defaultReminderMinutes = 2;
 
   bool _initialized = false;
   final Map<String, List<int>> _scheduledNotificationIds = {};

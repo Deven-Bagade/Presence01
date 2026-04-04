@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/attendance_service.dart';
 import '../services/notes_service.dart';
 
@@ -30,16 +32,38 @@ class _LectureAttendanceHistoryState extends State<LectureAttendanceHistory> {
 
   Future<void> _loadAttendanceHistory() async {
     try {
-      // First, get all attendance records
-      final allRecords = await _attendanceService.getAllAttendance().first;
+      // 1. Get standard attendance records (Present/Absent/Late)
+      final regularRecords = await _attendanceService.getAllAttendanceForLecture(widget.lectureId).first;
 
-      // Filter for this specific lecture
-      final filtered = allRecords.where((record) {
-        return record['lectureId']?.toString() == widget.lectureId;
-      }).toList();
+      // 2. ✅ FIXED: Fetch overrides (Cancelled/Holiday) which are stored in a different collection
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      List<Map<String, dynamic>> overrideRecords = [];
+
+      if (uid != null) {
+        final overrideSnap = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('lecture_overrides')
+            .where('lectureId', isEqualTo: widget.lectureId)
+            .get();
+
+        overrideRecords = overrideSnap.docs.map((doc) {
+          final data = doc.data();
+          return {
+            ...data,
+            'id': doc.id,
+            'status': data['type'], // map override 'type' to 'status'
+            'notes': data['note'],  // map override 'note' to 'notes'
+            'markedAt': data['timestamp'],
+          };
+        }).toList();
+      }
+
+      // 3. Combine both lists
+      final combined = [...regularRecords, ...overrideRecords];
 
       // Sort by date (most recent first)
-      filtered.sort((a, b) {
+      combined.sort((a, b) {
         final dateA = _parseTimestamp(a['markedAt'] ?? a['date']);
         final dateB = _parseTimestamp(b['markedAt'] ?? b['date']);
         if (dateA == null || dateB == null) return 0;
@@ -48,7 +72,7 @@ class _LectureAttendanceHistoryState extends State<LectureAttendanceHistory> {
 
       if (mounted) {
         setState(() {
-          _attendanceRecords = filtered;
+          _attendanceRecords = combined;
         });
       }
     } catch (e) {
@@ -167,7 +191,7 @@ class _LectureAttendanceHistoryState extends State<LectureAttendanceHistory> {
     final status = (record['status'] ?? 'unknown').toString();
     final isAuto = record['autoMarked'] == true;
     final reason = (record['reason'] ?? '').toString();
-    final notes = (record['notes'] ?? '').toString();
+    final notes = (record['notes'] ?? record['note'] ?? '').toString(); // ✅ FIXED: Check both 'notes' and 'note' keys
 
     Color statusColor = Colors.grey;
     IconData statusIcon = Icons.help_outline;
