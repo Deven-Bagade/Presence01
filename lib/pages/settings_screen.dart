@@ -393,12 +393,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             themeData: themeData,
             onTap: () => Navigator.pushNamed(context, "/profile"),
           ),
-          _actionTile(
-            icon: Icons.lock,
-            title: "Change Password",
-            themeData: themeData,
-            onTap: () => Navigator.pushNamed(context, "/changePassword"),
-          ),
+
 
           const Divider(),
 

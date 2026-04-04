@@ -149,16 +149,25 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           const SizedBox(height: 12),
 
           // Filter chips
+// Filter chips
           Row(
             children: [
-              _filterChip('all', 'All'),
-              const SizedBox(width: 8),
-              _filterChip('present', 'Present'),
-              const SizedBox(width: 8),
-              _filterChip('absent', 'Absent'),
-              const SizedBox(width: 8),
-              _filterChip('late', 'Late'),
-              const Spacer(),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _filterChip('all', 'All'),
+                      const SizedBox(width: 8),
+                      _filterChip('present', 'Present'),
+                      const SizedBox(width: 8),
+                      _filterChip('absent', 'Absent'),
+                      const SizedBox(width: 8),
+                      _filterChip('late', 'Late'),
+                    ],
+                  ),
+                ),
+              ),
               IconButton(
                 icon: Icon(Icons.info_outline, color: _primaryColor),
                 onPressed: () => _showInfo(context),

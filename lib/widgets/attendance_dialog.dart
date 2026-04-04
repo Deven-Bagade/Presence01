@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/attendance_service.dart';
+import '../services/notes_service.dart';
 
 class AttendanceDialog extends StatefulWidget {
   final Map<String, dynamic> lecture;
   final DateTime date;
   final VoidCallback onUpdated;
-  final int? occurrenceIndex; // ✅ FIXED: This is correct
+  final int? occurrenceIndex;
 
   const AttendanceDialog({
     super.key,
@@ -34,28 +35,42 @@ class _AttendanceDialogState extends State<AttendanceDialog> {
     setState(() => _saving = true);
 
     try {
+      final noteText = _notesCtrl.text.trim();
+      final reasonText = _reasonCtrl.text.trim();
+
       if (_status == 'cancelled' || _status == 'holiday') {
         await _attendanceService.markCancelled(
           lectureId: widget.lecture['id'],
           date: widget.date,
           type: _status,
-          note: _notesCtrl.text.trim(),
-          occurrenceIndex: widget.occurrenceIndex, // ✅ FIXED: Removed .toString()
+          note: noteText, // Overrides use 'note'
+          occurrenceIndex: widget.occurrenceIndex,
         );
       } else {
         await _attendanceService.markAttendance(
           lectureId: widget.lecture['id'],
           date: widget.date,
           status: _status,
-          reason: _reasonCtrl.text.trim(),
-          notes: _notesCtrl.text.trim(),
+          reason: reasonText, // Regular attendance saves the reason
+          notes: noteText,
           autoMarked: false,
-          occurrenceIndex: widget.occurrenceIndex, // ✅ FIXED: Changed from occurrenceId to occurrenceIndex
+          occurrenceIndex: widget.occurrenceIndex,
         );
       }
 
+      // ✅ ADDED: Bridge the note over to the Notes Screen automatically!
+      if (noteText.isNotEmpty) {
+        await NotesService().addNote(
+          lectureId: widget.lecture['id'],
+          date: widget.date,
+          content: 'Attendance ($_status): $noteText',
+        );
+      }
+
+      if (!mounted) return;
       widget.onUpdated();
-      if (mounted) Navigator.pop(context);
+      Navigator.pop(context);
+
     } catch (e) {
       _error(e.toString());
     }

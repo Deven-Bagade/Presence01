@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:presence01/pages/about_screen.dart';
+import 'package:presence01/pages/help_screen.dart';
 import 'package:workmanager/workmanager.dart';
 import 'firebase_options.dart';
 import 'pages/splash_screen.dart';
@@ -37,6 +39,11 @@ void callbackDispatcher() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    // This hides the red screen / yellow stripes entirely
+    // and just shows an empty invisible box instead.
+    return const SizedBox.shrink();
+  };
 
   // ⚠️ CRITICAL: CREATE NOTIFICATION CHANNELS IMMEDIATELY
   print('🔄 Creating notification channels in main()...');
@@ -139,6 +146,8 @@ class AttendanceApp extends StatelessWidget {
               '/terms': (_) => const TermsScreen(),
               '/analytics': (_) => const AnalyticsScreen(),
               '/notification-debug': (_) => const NotificationDebugScreen(),
+              '/help': (context) => const HelpScreen(),
+              '/about': (context) => const AboutScreen()
             },
           );
         },

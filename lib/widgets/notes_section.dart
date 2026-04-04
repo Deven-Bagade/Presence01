@@ -1,12 +1,10 @@
 // lib/widgets/notes_section.dart
-// Simple Notes UI: lists notes for a lecture and allows add / edit / delete.
-//
-// Usage:
-//   NotesSection(lectureId: lectureId, date: DateTime.now())
-// or to place inside attendance dialog.
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../services/notes_service.dart';
+import '../themes/app_themes.dart';
 
 class NotesSection extends StatefulWidget {
   final String lectureId;
@@ -21,15 +19,39 @@ class NotesSection extends StatefulWidget {
 class _NotesSectionState extends State<NotesSection> {
   final NotesService _notesService = NotesService();
   final TextEditingController _controller = TextEditingController();
+
+  // ✅ FIXED: Store the stream in state so it doesn't restart when the keyboard opens
+  late Stream<List<Map<String, dynamic>>> _notesStream;
   bool _isSaving = false;
 
-  void _clear() {
-    _controller.clear();
+  // Theme getters
+  Color get _primaryColor => Provider.of<ThemeProvider>(context, listen: false).themeData.primary;
+  Color get _cardColor => Provider.of<ThemeProvider>(context, listen: false).themeData.card;
+  Color get _textPrimary => Provider.of<ThemeProvider>(context, listen: false).themeData.textPrimary;
+  Color get _textSecondary => Provider.of<ThemeProvider>(context, listen: false).themeData.textSecondary;
+  Color get _borderColor => Provider.of<ThemeProvider>(context, listen: false).themeData.textSecondary.withOpacity(0.2);
+
+  @override
+  void initState() {
+    super.initState();
+    _notesStream = _notesService.streamNotesForLecture(widget.lectureId);
   }
+
+  // If the user selects a different lecture from the dropdown, update the stream
+  @override
+  void didUpdateWidget(NotesSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.lectureId != widget.lectureId) {
+      _notesStream = _notesService.streamNotesForLecture(widget.lectureId);
+    }
+  }
+
+  void _clear() => _controller.clear();
 
   Future<void> _addNote() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+
     setState(() => _isSaving = true);
     try {
       await _notesService.addNote(
@@ -38,11 +60,11 @@ class _NotesSectionState extends State<NotesSection> {
         content: text,
       );
       _clear();
+      FocusScope.of(context).unfocus(); // Close keyboard automatically
     } catch (e) {
-      // Basic error handling: show snackbar
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving note: $e')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving note: $e')));
     } finally {
-      setState(() => _isSaving = false);
+      if(mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -51,15 +73,25 @@ class _NotesSectionState extends State<NotesSection> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Edit note'),
+        backgroundColor: _cardColor,
+        title: Text('Edit note', style: TextStyle(color: _textPrimary)),
         content: TextField(
           controller: editController,
           maxLines: null,
-          decoration: const InputDecoration(hintText: 'Note content'),
+          style: TextStyle(color: _textPrimary),
+          decoration: InputDecoration(
+            hintText: 'Note content',
+            hintStyle: TextStyle(color: _textSecondary),
+            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: _borderColor)),
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('Cancel', style: TextStyle(color: _textSecondary))
+          ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: _primaryColor, foregroundColor: Colors.white),
             onPressed: () async {
               final newText = editController.text.trim();
               if (newText.isEmpty) return;
@@ -67,7 +99,7 @@ class _NotesSectionState extends State<NotesSection> {
               try {
                 await _notesService.updateNote(noteId: note['id'], content: newText);
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update failed: $e')));
+                if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update failed: $e')));
               }
             },
             child: const Text('Save'),
@@ -81,17 +113,22 @@ class _NotesSectionState extends State<NotesSection> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete note?'),
-        content: const Text('This action cannot be undone.'),
+        backgroundColor: _cardColor,
+        title: Text('Delete note?', style: TextStyle(color: _textPrimary)),
+        content: Text('This action cannot be undone.', style: TextStyle(color: _textSecondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('Cancel', style: TextStyle(color: _textSecondary))
+          ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
             onPressed: () async {
               Navigator.of(ctx).pop();
               try {
                 await _notesService.deleteNote(note['id']);
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+                if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
               }
             },
             child: const Text('Delete'),
@@ -102,22 +139,49 @@ class _NotesSectionState extends State<NotesSection> {
   }
 
   Widget _noteTile(Map<String, dynamic> note) {
-    final ts = note['timestamp'] ?? '';
-    final dateStr = ts is String ? ts.split('T').first : ts.toString();
-    return Card(
+    String displayDate = note['date'] ?? 'Unknown Date';
+    if (note['updatedAt'] != null && note['updatedAt'] is Timestamp) {
+      final dt = (note['updatedAt'] as Timestamp).toDate();
+      displayDate = DateFormat('MMM d, yyyy • h:mm a').format(dt);
+    }
+
+    return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: ListTile(
-        title: Text(note['content'] ?? ''),
-        subtitle: Text(dateStr),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        title: Text(
+          note['content'] ?? '',
+          style: TextStyle(color: _textPrimary, fontSize: 15),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Text(
+            displayDate,
+            style: TextStyle(color: _textSecondary, fontSize: 12),
+          ),
+        ),
         trailing: PopupMenuButton<String>(
+          icon: Icon(Icons.more_vert, color: _textSecondary),
+          color: _cardColor,
           onSelected: (v) {
             if (v == 'edit') _showEditDialog(note);
             if (v == 'delete') _confirmDelete(note);
           },
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'edit', child: Text('Edit')),
-            PopupMenuItem(value: 'delete', child: Text('Delete')),
+          itemBuilder: (_) => [
+            PopupMenuItem(value: 'edit', child: Text('Edit', style: TextStyle(color: _textPrimary))),
+            PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
           ],
         ),
       ),
@@ -126,14 +190,11 @@ class _NotesSectionState extends State<NotesSection> {
 
   @override
   Widget build(BuildContext context) {
-    // Stream notes for this lecture
-    final stream = _notesService.streamNotesForLecture(widget.lectureId);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 12),
-        const Text('Notes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        Text('Add a Note', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _textPrimary)),
         const SizedBox(height: 8),
         Row(
           children: [
@@ -141,44 +202,84 @@ class _NotesSectionState extends State<NotesSection> {
               child: TextField(
                 controller: _controller,
                 maxLines: null,
+                style: TextStyle(color: _textPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Write a quick note...',
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  hintText: 'Write something...',
+                  hintStyle: TextStyle(color: _textSecondary.withOpacity(0.7)),
+                  filled: true,
+                  fillColor: _cardColor,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _borderColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _borderColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: _primaryColor, width: 1.5),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             _isSaving
-                ? const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-            )
-                : IconButton(
-              onPressed: _addNote,
-              icon: const Icon(Icons.send),
-              tooltip: 'Add note',
+                ? const SizedBox(width: 48, height: 48, child: Center(child: CircularProgressIndicator()))
+                : Container(
+              decoration: BoxDecoration(
+                color: _primaryColor,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                onPressed: _addNote,
+                icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                tooltip: 'Add note',
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        StreamBuilder<List<Map<String, dynamic>>>(
-          stream: stream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final notes = snapshot.data ?? [];
-            if (notes.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('No notes yet.'),
+        const SizedBox(height: 24),
+        Text('Previous Notes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: _textPrimary)),
+        const SizedBox(height: 8),
+        Expanded(
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: _notesStream, // ✅ FIXED: Reads from the cached stream
+            builder: (context, snapshot) {
+              // ✅ FIXED: Added error checking to catch Firebase issues and display them
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'An error occurred: ${snapshot.error}',
+                    style: TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator(color: _primaryColor));
+              }
+              final notes = snapshot.data ?? [];
+              if (notes.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.notes, size: 48, color: _textSecondary.withOpacity(0.5)),
+                      const SizedBox(height: 12),
+                      Text('No notes for this lecture yet.', style: TextStyle(color: _textSecondary)),
+                    ],
+                  ),
+                );
+              }
+              return ListView.builder(
+                itemCount: notes.length,
+                itemBuilder: (context, index) => _noteTile(notes[index]),
               );
-            }
-            return Column(
-              children: notes.map((n) => _noteTile(n)).toList(),
-            );
-          },
+            },
+          ),
         ),
       ],
     );

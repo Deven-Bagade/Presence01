@@ -1,3 +1,4 @@
+// lib/services/notes_service.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -11,24 +12,23 @@ class NotesService {
       _firestore.collection('users').doc(_uid).collection('notes');
 
   // ─────────────────────────────────────────
-  // ADD / SAVE NOTE (used by dialog & editor)
+  // ADD / SAVE NOTE (FIXED: No longer overwrites)
   // ─────────────────────────────────────────
   Future<void> saveNote({
     required String lectureId,
     required DateTime date,
     required String content,
   }) async {
-    final id = _noteId(lectureId, date);
-
-    await _notesRef.doc(id).set({
+    // ✅ FIXED: Using .add() creates a unique ID for EVERY note.
+    await _notesRef.add({
       'lectureId': lectureId,
       'date': _formatDate(date),
       'content': content,
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    });
   }
 
-  // 🔁 Backward compatibility (old UI calls)
+  // Backward compatibility
   Future<void> addNote({
     required String lectureId,
     required DateTime date,
@@ -51,69 +51,33 @@ class NotesService {
   }
 
   // ─────────────────────────────────────────
-  // STREAM NOTES FOR A LECTURE  ✅ FIX
+  // STREAM NOTES FOR A LECTURE
   // ─────────────────────────────────────────
   Stream<List<Map<String, dynamic>>> streamNotesForLecture(String lectureId) {
     return _notesRef
         .where('lectureId', isEqualTo: lectureId)
-        .orderBy('updatedAt', descending: true)
         .snapshots()
         .map((snap) {
-      return snap.docs.map((doc) {
+      final docs = snap.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         return {
           ...data,
           'id': doc.id,
         };
       }).toList();
+
+      docs.sort((a, b) {
+        final aTime = a['updatedAt'] as Timestamp?;
+        final bTime = b['updatedAt'] as Timestamp?;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime);
+      });
+
+      return docs;
     });
   }
-
-  // ─────────────────────────────────────────
-  // OPTIONAL: STREAM NOTES FOR DATE
-  // ─────────────────────────────────────────
-  Stream<List<Map<String, dynamic>>> streamNotesForDate(DateTime date) {
-    final key = _formatDate(date);
-
-    return _notesRef
-        .where('date', isEqualTo: key)
-        .orderBy('updatedAt', descending: true)
-        .snapshots()
-        .map((snap) {
-      return snap.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return {
-          ...data,
-          'id': doc.id,
-        };
-      }).toList();
-    });
-  }
-
-  // Fetch a single note for lecture + date (one-time, non-stream)
-  Future<Map<String, dynamic>?> getNoteOnce({
-    required String lectureId,
-    required DateTime date,
-  }) async {
-    final id = _noteId(lectureId, date);
-
-    final doc = await _notesRef.doc(id).get();
-
-    if (!doc.exists) return null;
-
-    final data = doc.data() as Map<String, dynamic>;
-    return {
-      ...data,
-      'id': doc.id,
-    };
-  }
-
-
-  // ─────────────────────────────────────────
-  // HELPERS
-  // ─────────────────────────────────────────
-  String _noteId(String lectureId, DateTime date) =>
-      '$lectureId-${_formatDate(date)}';
 
   String _formatDate(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
