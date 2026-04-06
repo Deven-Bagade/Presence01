@@ -146,8 +146,7 @@ class AttendanceApp extends StatelessWidget {
               '/terms': (_) => const TermsScreen(),
               '/analytics': (_) => const AnalyticsScreen(),
               '/notification-debug': (_) => const NotificationDebugScreen(),
-              '/help': (context) => const HelpScreen(),
-              '/about': (context) => const AboutScreen()
+
             },
           );
         },
@@ -352,6 +351,7 @@ class _MainLayoutState extends State<MainLayout> {
       '/home': (_) => const HomeScreen(),
       '/add-lecture': (_) => const AddEditLectureScreen(),
       '/notification-debug': (_) => const NotificationDebugScreen(),
+
     },
     // Timetable tab routes
     {
@@ -373,6 +373,9 @@ class _MainLayoutState extends State<MainLayout> {
       '/analytics': (_) => const AnalyticsScreen(),
       '/notification-debug': (_) => const NotificationDebugScreen(),
       '/terms': (_) => const TermsScreen(),
+      '/help': (context) => const HelpScreen(),
+      '/about': (context) => const AboutScreen()
+
     },
   ];
 
