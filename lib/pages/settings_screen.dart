@@ -254,123 +254,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               activeColor: Colors.cyan,
             ),
 
-            _actionTile(
-              icon: Icons.notifications_active,
-              title: "Test Notification",
-              subtitle: "Send a test notification now",
-              themeData: themeData,
-              onTap: _sendTestNotification,
-            ),
 
-            _actionTile(
-              icon: Icons.refresh,
-              title: "Reschedule All Notifications",
-              subtitle: "Force refresh all lecture reminders",
-              themeData: themeData,
-              onTap: _rescheduleAllNotifications,
-            ),
-
-            _actionTile(
-              icon: Icons.clear_all,
-              title: "Clear All Notifications",
-              subtitle: "Remove all scheduled reminders",
-              themeData: themeData,
-              onTap: _clearAllNotifications,
-            ),
-
-            _actionTile(
-              icon: Icons.health_and_safety,
-              title: "Recover After Reboot",
-              subtitle: "Restore notifications after device restart",
-              themeData: themeData,
-              onTap: _recoverNotificationsAfterReboot,
-            ),
-
-            _actionTile(
-              icon: Icons.medical_services,
-              title: "Notification Health Check",
-              subtitle: "Run comprehensive diagnostics",
-              themeData: themeData,
-              onTap: _runNotificationDiagnostics,
-            ),
           ],
 
           const Divider(),
 
-          _sectionHeader("Background Services", themeData),
-          SwitchListTile(
-            title: Text(
-              "Auto-restart after Reboot",
-              style: TextStyle(color: themeData.textPrimary),
-            ),
-            subtitle: Text(
-              "Automatically restore notifications after device restart",
-              style: TextStyle(color: themeData.textSecondary),
-            ),
-            secondary: Icon(
-              Icons.power_settings_new,
-              color: _autoRestartAfterReboot
-                  ? Colors.green
-                  : themeData.textSecondary,
-            ),
-            value: _autoRestartAfterReboot,
-            onChanged: (value) async {
-              setState(() => _autoRestartAfterReboot = value);
-              await _savePreference('auto_restart_after_reboot', value);
-              if (value) {
-                await WorkManagerService.scheduleRebootRecovery();
-              }
-            },
-            activeColor: Colors.green,
-          ),
-
-          SwitchListTile(
-            title: Text(
-              "Disable Battery Optimization",
-              style: TextStyle(color: themeData.textPrimary),
-            ),
-            subtitle: Text(
-              "Allow notifications when device is idle (Android)",
-              style: TextStyle(color: themeData.textSecondary),
-            ),
-            secondary: Icon(
-              Icons.battery_charging_full,
-              color: _batteryOptimizationDisabled
-                  ? Colors.orange
-                  : themeData.textSecondary,
-            ),
-            value: _batteryOptimizationDisabled,
-            onChanged: (value) async {
-              setState(() => _batteryOptimizationDisabled = value);
-              await _savePreference('battery_optimization_disabled', value);
-              if (value && Platform.isAndroid) {
-                _showBatteryOptimizationGuide();
-              }
-            },
-            activeColor: Colors.orange,
-          ),
-
-          _actionTile(
-            icon: Icons.construction,
-            title: "Test WorkManager",
-            subtitle: "Test background task scheduling",
-            themeData: themeData,
-            onTap: _testWorkManager,
-          ),
-
-          const Divider(),
-
           _sectionHeader("Timetable", themeData),
-          SwitchListTile(
-            title: Text(
-              "Auto Conflict Check",
-              style: TextStyle(color: themeData.textPrimary),
-            ),
-            secondary: const Icon(Icons.warning_amber_rounded),
-            value: _timetableConflictCheck,
-            onChanged: (value) => setState(() => _timetableConflictCheck = value),
-            activeColor: themeData.primary,
-          ),
+
 
           SwitchListTile(
             title: Text(
@@ -410,13 +300,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             themeData: themeData,
             onTap: () => Navigator.pushNamed(context, "/about"),
           ),
-          _actionTile(
-            icon: Icons.bug_report,
-            title: "Notification Debug",
-            subtitle: "Advanced troubleshooting tools",
-            themeData: themeData,
-            onTap: () => Navigator.pushNamed(context, "/notification-debug"),
-          ),
+
 
           const Divider(),
 

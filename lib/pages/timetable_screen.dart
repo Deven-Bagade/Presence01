@@ -28,6 +28,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
   // 🆕 FIXED: Use proper state management
   final _refreshStream = StreamController<bool>.broadcast();
+
   bool get _isDisposed => !_refreshStream.hasListener && !mounted;
 
   // 🆕 SWAP STATE (UPDATED FOR OCCURRENCE-SPECIFIC SWAPPING)
@@ -36,38 +37,81 @@ class _TimetableScreenState extends State<TimetableScreen> {
   String? _swapSecondId;
   int? _swapFirstOccurrenceIndex;
   int? _swapSecondOccurrenceIndex;
-  Map<String, Map<String, dynamic>> _swapLectures = {}; // occurrenceKey -> {lectureId, subject, occurrenceIndex}
+  Map<String, Map<String, dynamic>> _swapLectures = {
+  }; // occurrenceKey -> {lectureId, subject, occurrenceIndex}
 
   static const double timeColumnWidth = 80.0;
   static const double hourCellHeight = 88.0;
 
   // 🆕 Color scheme from theme provider
-  Color get _primaryColor => Provider.of<ThemeProvider>(context, listen: false).themeData.primary;
-  Color get _secondaryColor => Provider.of<ThemeProvider>(context, listen: false).themeData.secondary;
-  Color get _accentColor => Provider.of<ThemeProvider>(context, listen: false).themeData.accent;
-  Color get _backgroundColor => Provider.of<ThemeProvider>(context, listen: false).themeData.background;
-  Color get _cardColor => Provider.of<ThemeProvider>(context, listen: false).themeData.card;
-  Color get _textPrimary => Provider.of<ThemeProvider>(context, listen: false).themeData.textPrimary;
-  Color get _textSecondary => Provider.of<ThemeProvider>(context, listen: false).themeData.textSecondary;
-  Color get _borderColor => Provider.of<ThemeProvider>(context, listen: false).themeData.textSecondary.withOpacity(0.2);
+  Color get _primaryColor =>
+      Provider
+          .of<ThemeProvider>(context, listen: false)
+          .themeData
+          .primary;
+
+  Color get _secondaryColor =>
+      Provider
+          .of<ThemeProvider>(context, listen: false)
+          .themeData
+          .secondary;
+
+  Color get _accentColor =>
+      Provider
+          .of<ThemeProvider>(context, listen: false)
+          .themeData
+          .accent;
+
+  Color get _backgroundColor =>
+      Provider
+          .of<ThemeProvider>(context, listen: false)
+          .themeData
+          .background;
+
+  Color get _cardColor =>
+      Provider
+          .of<ThemeProvider>(context, listen: false)
+          .themeData
+          .card;
+
+  Color get _textPrimary =>
+      Provider
+          .of<ThemeProvider>(context, listen: false)
+          .themeData
+          .textPrimary;
+
+  Color get _textSecondary =>
+      Provider
+          .of<ThemeProvider>(context, listen: false)
+          .themeData
+          .textSecondary;
+
+  Color get _borderColor =>
+      Provider
+          .of<ThemeProvider>(context, listen: false)
+          .themeData
+          .textSecondary
+          .withOpacity(0.2);
 
   // 🆕 Status colors from theme constants
   Color get _successColor => AppThemeData.presentColor; // Green
-  Color get _warningColor => AppThemeData.lateColor;    // Amber
-  Color get _errorColor => AppThemeData.absentColor;    // Red
+  Color get _warningColor => AppThemeData.lateColor; // Amber
+  Color get _errorColor => AppThemeData.absentColor; // Red
 
   // Swap colors (kept consistent)
   Color get _swapFirstColor => const Color(0xFFFF9500); // Orange
   Color get _swapSecondColor => const Color(0xFF34C759); // Green
 
   // 🆕 Helper getters for swap keys
-  String get _swapFirstKey => _swapFirstId != null && _swapFirstOccurrenceIndex != null
-      ? '$_swapFirstId-$_swapFirstOccurrenceIndex'
-      : '';
+  String get _swapFirstKey =>
+      _swapFirstId != null && _swapFirstOccurrenceIndex != null
+          ? '$_swapFirstId-$_swapFirstOccurrenceIndex'
+          : '';
 
-  String get _swapSecondKey => _swapSecondId != null && _swapSecondOccurrenceIndex != null
-      ? '$_swapSecondId-$_swapSecondOccurrenceIndex'
-      : '';
+  String get _swapSecondKey =>
+      _swapSecondId != null && _swapSecondOccurrenceIndex != null
+          ? '$_swapSecondId-$_swapSecondOccurrenceIndex'
+          : '';
 
   @override
   void initState() {
@@ -83,7 +127,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
           await _notificationService.initialize();
 
           // Request permissions if not granted
-          final granted = await _notificationService.requestNotificationPermissions();
+          final granted = await _notificationService
+              .requestNotificationPermissions();
 
           if (granted) {
             // Schedule notifications
@@ -102,6 +147,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
       }
     });
   }
+
   @override
   void dispose() {
     _refreshStream.close();
@@ -153,10 +199,12 @@ class _TimetableScreenState extends State<TimetableScreen> {
                 size: 20,
               ),
             ),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AddEditLectureScreen()),
-            ),
+            onPressed: () =>
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const AddEditLectureScreen()),
+                ),
           ),
 
           // Swap toggle button
@@ -165,7 +213,9 @@ class _TimetableScreenState extends State<TimetableScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: _swapMode ? _warningColor.withOpacity(0.1) : _primaryColor.withOpacity(0.1),
+                color: _swapMode
+                    ? _warningColor.withOpacity(0.1)
+                    : _primaryColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -224,7 +274,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
   void _confirmSwap() async {
     if (_swapFirstId == null || _swapSecondId == null ||
-        _swapFirstOccurrenceIndex == null || _swapSecondOccurrenceIndex == null ||
+        _swapFirstOccurrenceIndex == null ||
+        _swapSecondOccurrenceIndex == null ||
         _isSwapping) return;
 
     _isSwapping = true;
@@ -235,109 +286,110 @@ class _TimetableScreenState extends State<TimetableScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Text(
-          "🔀 Swap Occurrences",
-          style: TextStyle(color: _primaryColor),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Swap specific occurrences:",
-              style: TextStyle(color: _textPrimary),
+      builder: (context) =>
+          AlertDialog(
+            title: Text(
+              "🔀 Swap Occurrences",
+              style: TextStyle(color: _primaryColor),
             ),
-            const SizedBox(height: 12),
-            Card(
-              color: _swapFirstColor.withOpacity(0.1),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "📌 First: ${firstLecture?['subject'] ?? 'Unknown'}",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: _swapFirstColor,
-                      ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Swap specific occurrences:",
+                  style: TextStyle(color: _textPrimary),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  color: _swapFirstColor.withOpacity(0.1),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "📌 First: ${firstLecture?['subject'] ?? 'Unknown'}",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: _swapFirstColor,
+                          ),
+                        ),
+                        Text(
+                          "Occurrence ${(_swapFirstOccurrenceIndex! + 1)}",
+                          style: TextStyle(color: _textSecondary),
+                        ),
+                      ],
                     ),
-                    Text(
-                      "Occurrence ${(_swapFirstOccurrenceIndex! + 1)}",
-                      style: TextStyle(color: _textSecondary),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  color: _swapSecondColor.withOpacity(0.1),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "📌 Second: ${secondLecture?['subject'] ?? 'Unknown'}",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: _swapSecondColor,
+                          ),
+                        ),
+                        Text(
+                          "Occurrence ${(_swapSecondOccurrenceIndex! + 1)}",
+                          style: TextStyle(color: _textSecondary),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Only these specific occurrences will swap their days/times.",
+                  style: TextStyle(
+                    color: _textSecondary,
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Other occurrences of these lectures will remain unchanged.",
+                  style: TextStyle(
+                    color: _accentColor,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _isSwapping = false;
+                },
+                child: Text(
+                  "Cancel",
+                  style: TextStyle(color: _textSecondary),
                 ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Card(
-              color: _swapSecondColor.withOpacity(0.1),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "📌 Second: ${secondLecture?['subject'] ?? 'Unknown'}",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: _swapSecondColor,
-                      ),
-                    ),
-                    Text(
-                      "Occurrence ${(_swapSecondOccurrenceIndex! + 1)}",
-                      style: TextStyle(color: _textSecondary),
-                    ),
-                  ],
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _primaryColor,
+                  foregroundColor: Colors.white,
                 ),
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await _performSwap();
+                  _isSwapping = false;
+                },
+                child: const Text("Swap Occurrences"),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "Only these specific occurrences will swap their days/times.",
-              style: TextStyle(
-                color: _textSecondary,
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Other occurrences of these lectures will remain unchanged.",
-              style: TextStyle(
-                color: _accentColor,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _isSwapping = false;
-            },
-            child: Text(
-              "Cancel",
-              style: TextStyle(color: _textSecondary),
-            ),
+            ],
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryColor,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              Navigator.pop(context);
-              await _performSwap();
-              _isSwapping = false;
-            },
-            child: const Text("Swap Occurrences"),
-          ),
-        ],
-      ),
     );
   }
 
@@ -346,7 +398,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
+      builder: (context) =>
+      const Center(
         child: CircularProgressIndicator(),
       ),
     );
@@ -390,7 +443,6 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
       // Refresh timetable
       _refreshTimetable();
-
     } catch (e) {
       // Check if widget is still mounted before popping
       if (!mounted) return;
@@ -465,7 +517,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
         final occ = occurrenceData['occurrence'] as LectureOccurrence?;
         if (occ != null) {
           // Try to find the occurrence index
-          final allOccurrences = occurrenceData['occurrencesList'] as List<LectureOccurrence>?;
+          final allOccurrences = occurrenceData['occurrencesList'] as List<
+              LectureOccurrence>?;
           if (allOccurrences != null) {
             for (int i = 0; i < allOccurrences.length; i++) {
               final checkOcc = allOccurrences[i];
@@ -615,15 +668,22 @@ class _TimetableScreenState extends State<TimetableScreen> {
             final endHour = maxEndTime?.hour ?? 17;
 
             // Create time slots from start hour to end hour
-            final slots = List.generate((endHour - startHour + 1).clamp(1, 24), (i) => startHour + i);
+            final slots = List.generate(
+                (endHour - startHour + 1).clamp(1, 24), (i) => startHour + i);
 
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minWidth: MediaQuery.of(context).size.width,
+                  minWidth: MediaQuery
+                      .of(context)
+                      .size
+                      .width,
                   maxWidth:
-                  max(MediaQuery.of(context).size.width, timeColumnWidth + 7 * 140),
+                  max(MediaQuery
+                      .of(context)
+                      .size
+                      .width, timeColumnWidth + 7 * 140),
                 ),
                 child: SingleChildScrollView(
                   child: Padding(
@@ -652,7 +712,9 @@ class _TimetableScreenState extends State<TimetableScreen> {
   // DAILY VIEW
   // ─────────────────────────────────────────
   Widget _dailyView() {
-    final today = DateTime.now().weekday;
+    final today = DateTime
+        .now()
+        .weekday;
 
     return StreamBuilder<bool>(
       stream: _refreshStream.stream,
@@ -705,15 +767,20 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
   Widget _dailyCard(Map<String, dynamic> occurrenceData) {
     final subject = occurrenceData['subject'] ?? '';
-    final room = occurrenceData['occurrenceRoom'] ?? occurrenceData['room'] ?? '';
-    final topic = occurrenceData['occurrenceTopic'] ?? occurrenceData['topic'] ?? '';
+    final room = occurrenceData['occurrenceRoom'] ?? occurrenceData['room'] ??
+        '';
+    final topic = occurrenceData['occurrenceTopic'] ??
+        occurrenceData['topic'] ?? '';
     final startTime = occurrenceData['occurrenceStartTime'] as TimeOfDay?;
     final endTime = occurrenceData['occurrenceEndTime'] as TimeOfDay?;
     final lectureId = occurrenceData['id'] as String?;
     final occurrenceIndex = occurrenceData['occurrenceIndex'] as int? ?? 0;
 
-    final occurrenceKey = lectureId != null ? '$lectureId-$occurrenceIndex' : '';
-    final isSelected = _swapMode && (occurrenceKey == _swapFirstKey || occurrenceKey == _swapSecondKey);
+    final occurrenceKey = lectureId != null
+        ? '$lectureId-$occurrenceIndex'
+        : '';
+    final isSelected = _swapMode &&
+        (occurrenceKey == _swapFirstKey || occurrenceKey == _swapSecondKey);
     final isFirstSelected = occurrenceKey == _swapFirstKey;
 
     return Container(
@@ -745,7 +812,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: isSelected
-                ? (isFirstSelected ? _swapFirstColor : _swapSecondColor).withOpacity(0.2)
+                ? (isFirstSelected ? _swapFirstColor : _swapSecondColor)
+                .withOpacity(0.2)
                 : _primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
@@ -788,7 +856,9 @@ class _TimetableScreenState extends State<TimetableScreen> {
               Container(
                 margin: const EdgeInsets.only(left: 8),
                 child: CircleAvatar(
-                  backgroundColor: isFirstSelected ? _swapFirstColor : _swapSecondColor,
+                  backgroundColor: isFirstSelected
+                      ? _swapFirstColor
+                      : _swapSecondColor,
                   radius: 10,
                   child: Text(
                     isFirstSelected ? "1" : "2",
@@ -825,7 +895,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  "${_formatTimeOfDay(startTime)} - ${_formatTimeOfDay(endTime)}",
+                  "${_formatTimeOfDay(startTime)} - ${_formatTimeOfDay(
+                      endTime)}",
                   style: TextStyle(
                     color: _textSecondary,
                     fontSize: 13,
@@ -848,11 +919,13 @@ class _TimetableScreenState extends State<TimetableScreen> {
               ],
             ),
             // 🆕 Show occurrence index if multiple occurrences exist
-            if (occurrenceData['occurrenceCount'] != null && occurrenceData['occurrenceCount'] > 1)
+            if (occurrenceData['occurrenceCount'] != null &&
+                occurrenceData['occurrenceCount'] > 1)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  "Occurrence ${occurrenceIndex + 1} of ${occurrenceData['occurrenceCount']}",
+                  "Occurrence ${occurrenceIndex +
+                      1} of ${occurrenceData['occurrenceCount']}",
                   style: TextStyle(
                     color: _accentColor,
                     fontSize: 11,
@@ -902,8 +975,18 @@ class _TimetableScreenState extends State<TimetableScreen> {
   // ─────────────────────────────────────────
   Widget _weekHeader() {
     final days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    final fullDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    final today = DateTime.now().weekday - 1;
+    final fullDays = [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ];
+    final today = DateTime
+        .now()
+        .weekday - 1;
 
     return Container(
       decoration: BoxDecoration(
@@ -939,54 +1022,56 @@ class _TimetableScreenState extends State<TimetableScreen> {
               ),
             ),
           ),
-          ...days.asMap().entries.map(
-                (entry) => Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: entry.key == today
-                      ? _accentColor.withOpacity(0.1)
-                      : _backgroundColor,
-                  border: Border(
-                    left: BorderSide(color: _borderColor),
+          ...days
+              .asMap()
+              .entries
+              .map(
+                (entry) =>
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: entry.key == today
+                          ? _accentColor.withOpacity(0.1)
+                          : _backgroundColor,
+                      border: Border(
+                        left: BorderSide(color: _borderColor),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          entry.value,
+                          style: TextStyle(
+                            color: entry.key == today
+                                ? _accentColor
+                                : _textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          fullDays[entry.key].substring(0, 3),
+                          style: TextStyle(
+                            color: entry.key == today
+                                ? _accentColor
+                                : _textSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                child: Column(
-                  children: [
-                    Text(
-                      entry.value,
-                      style: TextStyle(
-                        color: entry.key == today
-                            ? _accentColor
-                            : _textPrimary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      fullDays[entry.key].substring(0, 3),
-                      style: TextStyle(
-                        color: entry.key == today
-                            ? _accentColor
-                            : _textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _timeRow(
-      int hour,
-      Map<int, List<Map<String, dynamic>>> weekly,
-      ) {
+  Widget _timeRow(int hour,
+      Map<int, List<Map<String, dynamic>>> weekly,) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1034,10 +1119,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
     );
   }
 
-  Widget _hourCellContent(
-      int hour,
-      List<Map<String, dynamic>> dayOccurrences,
-      ) {
+  Widget _hourCellContent(int hour,
+      List<Map<String, dynamic>> dayOccurrences,) {
     final slotStart = DateTime(2025, 1, 1, hour);
     final slotEnd = slotStart.add(const Duration(hours: 1));
 
@@ -1050,8 +1133,12 @@ class _TimetableScreenState extends State<TimetableScreen> {
       if (startTime == null || endTime == null) continue;
 
       // Convert TimeOfDay to DateTime for comparison
-      final s = DateTime(slotStart.year, slotStart.month, slotStart.day, startTime.hour, startTime.minute);
-      final e = DateTime(slotStart.year, slotStart.month, slotStart.day, endTime.hour, endTime.minute);
+      final s = DateTime(
+          slotStart.year, slotStart.month, slotStart.day, startTime.hour,
+          startTime.minute);
+      final e = DateTime(
+          slotStart.year, slotStart.month, slotStart.day, endTime.hour,
+          endTime.minute);
 
       if (s.isBefore(slotEnd) && e.isAfter(slotStart)) {
         overlaps.add({
@@ -1065,18 +1152,26 @@ class _TimetableScreenState extends State<TimetableScreen> {
     if (overlaps.isEmpty) return const SizedBox.shrink();
 
     return Stack(
-      children: overlaps.asMap().entries.map((entry) {
+      children: overlaps
+          .asMap()
+          .entries
+          .map((entry) {
         final occurrence = entry.value;
         final start = occurrence['__start'] as DateTime;
         final end = occurrence['__end'] as DateTime;
 
         final minutesFromTop = start.minute;
-        final heightMinutes = end.difference(start).inMinutes;
+        final heightMinutes = end
+            .difference(start)
+            .inMinutes;
 
         final lectureId = occurrence['id'] as String?;
         final occurrenceIndex = occurrence['occurrenceIndex'] as int? ?? 0;
-        final occurrenceKey = lectureId != null ? '$lectureId-$occurrenceIndex' : '';
-        final isSelected = occurrenceKey == _swapFirstKey || occurrenceKey == _swapSecondKey;
+        final occurrenceKey = lectureId != null
+            ? '$lectureId-$occurrenceIndex'
+            : '';
+        final isSelected = occurrenceKey == _swapFirstKey ||
+            occurrenceKey == _swapSecondKey;
         final isFirstSelected = occurrenceKey == _swapFirstKey;
 
         return Positioned(
@@ -1125,7 +1220,9 @@ class _TimetableScreenState extends State<TimetableScreen> {
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: isSelected
-                                  ? (isFirstSelected ? _swapFirstColor : _swapSecondColor)
+                                  ? (isFirstSelected
+                                  ? _swapFirstColor
+                                  : _swapSecondColor)
                                   : _textPrimary,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -1134,11 +1231,15 @@ class _TimetableScreenState extends State<TimetableScreen> {
                         ),
                         if (_swapMode && isSelected)
                           CircleAvatar(
-                            backgroundColor: isFirstSelected ? _swapFirstColor : _swapSecondColor,
+                            backgroundColor: isFirstSelected
+                                ? _swapFirstColor
+                                : _swapSecondColor,
                             radius: 6,
                             child: Text(
                               isFirstSelected ? "1" : "2",
-                              style: const TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.bold),
+                              style: const TextStyle(color: Colors.white,
+                                  fontSize: 7,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                       ],
@@ -1149,19 +1250,24 @@ class _TimetableScreenState extends State<TimetableScreen> {
                         style: TextStyle(
                           fontSize: 9,
                           color: isSelected
-                              ? (isFirstSelected ? _swapFirstColor : _swapSecondColor)
+                              ? (isFirstSelected
+                              ? _swapFirstColor
+                              : _swapSecondColor)
                               : _textSecondary,
                         ),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
-                    if (occurrence['occurrenceCount'] != null && occurrence['occurrenceCount'] > 1)
+                    if (occurrence['occurrenceCount'] != null &&
+                        occurrence['occurrenceCount'] > 1)
                       Text(
                         "Occ ${(occurrenceIndex + 1)}",
                         style: TextStyle(
                           fontSize: 8,
                           color: isSelected
-                              ? (isFirstSelected ? _swapFirstColor : _swapSecondColor)
+                              ? (isFirstSelected
+                              ? _swapFirstColor
+                              : _swapSecondColor)
                               : _textSecondary.withOpacity(0.7),
                         ),
                       ),
@@ -1215,191 +1321,205 @@ class _TimetableScreenState extends State<TimetableScreen> {
           top: Radius.circular(24),
         ),
       ),
-      builder: (_) => SafeArea(
-        child: Wrap(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: _borderColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    subject,
-                    style: TextStyle(
-                      color: _textPrimary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "${_formatTimeOfDay(occurrenceData['occurrenceStartTime'] as TimeOfDay?)} • ${occurrenceData['occurrenceRoom'] ?? occurrenceData['room'] ?? 'No room'}",
-                    style: TextStyle(
-                      color: _textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                  if (isMultipleOccurrence)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        "Occurrence ${foundOccurrenceIndex + 1} of ${allOccurrences.length}",
-                        style: TextStyle(
-                          color: _accentColor,
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
+      builder: (_) =>
+          SafeArea(
+            child: Wrap(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: _borderColor,
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                    ),
-                ],
-              ),
-            ),
-
-            // Swap option
-            if (_swapMode)
-              ListTile(
-                leading: Icon(Icons.swap_horiz, color: _warningColor),
-                title: Text(
-                  "Select for swap",
-                  style: TextStyle(color: _textPrimary),
+                      const SizedBox(height: 12),
+                      Text(
+                        subject,
+                        style: TextStyle(
+                          color: _textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "${_formatTimeOfDay(
+                            occurrenceData['occurrenceStartTime'] as TimeOfDay?)} • ${occurrenceData['occurrenceRoom'] ??
+                            occurrenceData['room'] ?? 'No room'}",
+                        style: TextStyle(
+                          color: _textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                      if (isMultipleOccurrence)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            "Occurrence ${foundOccurrenceIndex +
+                                1} of ${allOccurrences.length}",
+                            style: TextStyle(
+                              color: _accentColor,
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-                subtitle: isMultipleOccurrence
-                    ? Text(
-                  "Occurrence ${foundOccurrenceIndex + 1}",
-                  style: TextStyle(fontSize: 12, color: _textSecondary),
-                )
-                    : null,
-                trailing: _getSwapTrailingIcon(lectureId, foundOccurrenceIndex),
-                onTap: () {
-                  Navigator.pop(context);
-                  // Add occurrence index to the data
-                  occurrenceData['occurrenceIndex'] = foundOccurrenceIndex;
-                  _selectForSwap(occurrenceData);
-                },
-              ),
 
-            // Mark Attendance option
-            ListTile(
-              leading: Icon(Icons.check, color: _primaryColor),
-              title: Text(
-                "Mark Attendance",
-                style: TextStyle(color: _textPrimary),
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-
-                // Get attendance for this specific occurrence
-                final today = DateTime.now();
-                final att = await _attendanceService.getAttendanceForOccurrence(
-                  lectureId: lectureId!,
-                  date: today,
-                  occurrenceIndex: foundOccurrenceIndex,
-                );
-
-                if (!mounted) return;
-
-                showDialog(
-                  context: context,
-                  builder: (_) => AttendanceDialog(
-                    lecture: occurrenceData,
-                    date: today,
-                    onUpdated: _refreshTimetable,
-                    occurrenceIndex: foundOccurrenceIndex,
+                // Swap option
+                if (_swapMode)
+                  ListTile(
+                    leading: Icon(Icons.swap_horiz, color: _warningColor),
+                    title: Text(
+                      "Select for swap",
+                      style: TextStyle(color: _textPrimary),
+                    ),
+                    subtitle: isMultipleOccurrence
+                        ? Text(
+                      "Occurrence ${foundOccurrenceIndex + 1}",
+                      style: TextStyle(fontSize: 12, color: _textSecondary),
+                    )
+                        : null,
+                    trailing: _getSwapTrailingIcon(
+                        lectureId, foundOccurrenceIndex),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Add occurrence index to the data
+                      occurrenceData['occurrenceIndex'] = foundOccurrenceIndex;
+                      _selectForSwap(occurrenceData);
+                    },
                   ),
-                );
-              },
-            ),
 
-            // Attendance History option
-            ListTile(
-              leading: Icon(Icons.history, color: _secondaryColor),
-              title: Text(
-                "Attendance History",
-                style: TextStyle(color: _textPrimary),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                showDialog(
-                  context: context,
-                  builder: (_) => LectureAttendanceHistory(
-                    lectureId: lectureId!,
-                    lectureName: subject,
+                // Mark Attendance option
+                ListTile(
+                  leading: Icon(Icons.check, color: _primaryColor),
+                  title: Text(
+                    "Mark Attendance",
+                    style: TextStyle(color: _textPrimary),
                   ),
-                );
-              },
-            ),
+                  onTap: () async {
+                    Navigator.pop(context);
 
-            // View Timetable History option
-            ListTile(
-              leading: Icon(Icons.history, color: Colors.deepPurple),
-              title: Text(
-                "View Timetable History",
-                style: TextStyle(color: _textPrimary),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TimetableHistoryScreen(
+                    // Get attendance for this specific occurrence
+                    final today = DateTime.now();
+                    final att = await _attendanceService
+                        .getAttendanceForOccurrence(
                       lectureId: lectureId!,
-                      lectureName: subject,
-                    ),
-                  ),
-                );
-              },
-            ),
+                      date: today,
+                      occurrenceIndex: foundOccurrenceIndex,
+                    );
 
-            // Edit Lecture option
-            ListTile(
-              leading: Icon(Icons.edit, color: _primaryColor),
-              title: Text(
-                "Edit Lecture",
-                style: TextStyle(color: _textPrimary),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AddEditLectureScreen(
-                      lectureId: lectureId,
-                      initialData: occurrenceData,
-                    ),
-                  ),
-                ).then((_) => _refreshTimetable());
-              },
-            ),
+                    if (!mounted) return;
 
-            // DELETE OPTION
-            ListTile(
-              leading: Icon(Icons.delete, color: _errorColor),
-              title: Text(
-                isMultipleOccurrence ? "Delete This Occurrence" : "Delete Lecture",
-                style: TextStyle(color: _errorColor, fontWeight: FontWeight.w500),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _showDeleteConfirmation(
-                  occurrenceData,
-                  foundOccurrenceIndex,
-                  isMultipleOccurrence,
-                  allOccurrences,
-                );
-              },
+                    showDialog(
+                      context: context,
+                      builder: (_) =>
+                          AttendanceDialog(
+                            lecture: occurrenceData,
+                            date: today,
+                            onUpdated: _refreshTimetable,
+                            occurrenceIndex: foundOccurrenceIndex,
+                          ),
+                    );
+                  },
+                ),
+
+                // Attendance History option
+                ListTile(
+                  leading: Icon(Icons.history, color: _secondaryColor),
+                  title: Text(
+                    "Attendance History",
+                    style: TextStyle(color: _textPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    showDialog(
+                      context: context,
+                      builder: (_) =>
+                          LectureAttendanceHistory(
+                            lectureId: lectureId!,
+                            lectureName: subject,
+                          ),
+                    );
+                  },
+                ),
+
+                // View Timetable History option
+                ListTile(
+                  leading: Icon(Icons.history, color: Colors.deepPurple),
+                  title: Text(
+                    "View Timetable History",
+                    style: TextStyle(color: _textPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            TimetableHistoryScreen(
+                              lectureId: lectureId!,
+                              lectureName: subject,
+                            ),
+                      ),
+                    );
+                  },
+                ),
+
+                // Edit Lecture option
+                ListTile(
+                  leading: Icon(Icons.edit, color: _primaryColor),
+                  title: Text(
+                    "Edit Lecture",
+                    style: TextStyle(color: _textPrimary),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            AddEditLectureScreen(
+                              lectureId: lectureId,
+                              initialData: occurrenceData,
+                            ),
+                      ),
+                    ).then((_) => _refreshTimetable());
+                  },
+                ),
+
+                // DELETE OPTION
+                ListTile(
+                  leading: Icon(Icons.delete, color: _errorColor),
+                  title: Text(
+                    isMultipleOccurrence
+                        ? "Delete This Occurrence"
+                        : "Delete Lecture",
+                    style: TextStyle(
+                        color: _errorColor, fontWeight: FontWeight.w500),
+                  ),
+                  onTap: () {
+                    // Pop bottom sheet first
+                    Navigator.pop(context);
+                    _showDeleteConfirmation(
+                      occurrenceData,
+                      foundOccurrenceIndex,
+                      isMultipleOccurrence,
+                      allOccurrences,
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -1422,12 +1542,10 @@ class _TimetableScreenState extends State<TimetableScreen> {
     return null;
   }
 
-  void _showDeleteConfirmation(
-      Map<String, dynamic> occurrenceData,
+  void _showDeleteConfirmation(Map<String, dynamic> occurrenceData,
       int occurrenceIndex,
       bool isMultipleOccurrence,
-      List<LectureOccurrence> allOccurrences,
-      ) {
+      List<LectureOccurrence> allOccurrences,) {
     final lectureId = occurrenceData['id'] as String?;
     final subject = occurrenceData['subject'] as String? ?? 'Lecture';
     final occurrence = allOccurrences[occurrenceIndex];
@@ -1436,110 +1554,119 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(
-          isMultipleOccurrence ? "🗑️ Delete Occurrence" : "🗑️ Delete Lecture",
-          style: TextStyle(color: _errorColor),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
+      builder: (_) =>
+          AlertDialog(
+            title: Text(
               isMultipleOccurrence
-                  ? "Delete this occurrence of '$subject'?"
-                  : "Are you sure you want to delete '$subject'?",
-              style: TextStyle(color: _textPrimary),
+                  ? "🗑️ Delete Occurrence"
+                  : "🗑️ Delete Lecture",
+              style: TextStyle(color: _errorColor),
             ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isMultipleOccurrence
+                      ? "Delete this occurrence of '$subject'?"
+                      : "Are you sure you want to delete '$subject'?",
+                  style: TextStyle(color: _textPrimary),
+                ),
 
-            if (isMultipleOccurrence) ...[
-              const SizedBox(height: 12),
-              Card(
-                color: _backgroundColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Occurrence Details:",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: _textPrimary,
-                        ),
+                if (isMultipleOccurrence) ...[
+                  const SizedBox(height: 12),
+                  Card(
+                    color: _backgroundColor,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Occurrence Details:",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: _textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Day: ${_dayName(occurrence.dayOfWeek)}",
+                            style: TextStyle(color: _textSecondary),
+                          ),
+                          Text(
+                            "Time: ${occurrence
+                                .formattedStartTime} - ${occurrence
+                                .formattedEndTime}",
+                            style: TextStyle(color: _textSecondary),
+                          ),
+                          if (occurrence.room != null)
+                            Text(
+                              "Room: ${occurrence.room}",
+                              style: TextStyle(color: _textSecondary),
+                            ),
+                          Text(
+                            "Occurrence: ${occurrenceIndex +
+                                1} of ${allOccurrences.length}",
+                            style: TextStyle(
+                              color: _accentColor,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Day: ${_dayName(occurrence.dayOfWeek)}",
-                        style: TextStyle(color: _textSecondary),
-                      ),
-                      Text(
-                        "Time: ${occurrence.formattedStartTime} - ${occurrence.formattedEndTime}",
-                        style: TextStyle(color: _textSecondary),
-                      ),
-                      if (occurrence.room != null)
-                        Text(
-                          "Room: ${occurrence.room}",
-                          style: TextStyle(color: _textSecondary),
-                        ),
-                      Text(
-                        "Occurrence: ${occurrenceIndex + 1} of ${allOccurrences.length}",
-                        style: TextStyle(
-                          color: _accentColor,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
 
-              const SizedBox(height: 12),
-              Text(
-                "This will remove only this specific occurrence. Other occurrences will remain scheduled.",
-                style: TextStyle(
-                  color: _textSecondary,
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
+                  const SizedBox(height: 12),
+                  Text(
+                    "This will remove only this specific occurrence. Other occurrences will remain scheduled.",
+                    style: TextStyle(
+                      color: _textSecondary,
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ] else
+                  ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      "⚠️ This action cannot be undone. All attendance records and schedule history will be deleted.",
+                      style: TextStyle(
+                        color: _errorColor,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  "Cancel",
+                  style: TextStyle(color: _textSecondary),
                 ),
               ),
-            ] else ...[
-              const SizedBox(height: 12),
-              Text(
-                "⚠️ This action cannot be undone. All attendance records and schedule history will be deleted.",
-                style: TextStyle(
-                  color: _errorColor,
-                  fontSize: 12,
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _errorColor,
+                  foregroundColor: Colors.white,
                 ),
+                onPressed: () =>
+                    _deleteLectureOrOccurrence(
+                      lectureId,
+                      occurrenceIndex,
+                      isMultipleOccurrence,
+                      occurrenceData,
+                    ),
+                child: const Text("Delete"),
               ),
             ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              "Cancel",
-              style: TextStyle(color: _textSecondary),
-            ),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _errorColor,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () => _deleteLectureOrOccurrence(
-              lectureId,
-              occurrenceIndex,
-              isMultipleOccurrence,
-              occurrenceData,
-            ),
-            child: const Text("Delete"),
-          ),
-        ],
-      ),
     );
   }
+
 
   String _dayName(int dayOfWeek) {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday',
@@ -1554,10 +1681,15 @@ class _TimetableScreenState extends State<TimetableScreen> {
       Map<String, dynamic> occurrenceData,
       ) async {
     try {
+      // ✅ Close the delete confirmation dialog BEFORE showing loading dialog
+      Navigator.pop(context);
+
+      // Show loading dialog
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
+        builder: (context) =>
+        const Center(
           child: CircularProgressIndicator(),
         ),
       );
@@ -1574,11 +1706,12 @@ class _TimetableScreenState extends State<TimetableScreen> {
         await _lectureService.deleteLecture(lectureId: lectureId);
       }
 
-      // Close loading
+      // Close loading dialog
       if (!mounted) return;
       Navigator.pop(context);
 
-      // Show success
+      // Show success message
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -1594,16 +1727,15 @@ class _TimetableScreenState extends State<TimetableScreen> {
         ),
       );
 
-      // Close dialogs and refresh
-      Navigator.pop(context); // Close delete confirmation
+      // Close any remaining dialogs and refresh the timetable
       _refreshTimetable();
 
     } catch (e) {
-      // Close loading
+      // Close loading dialog on error
       if (!mounted) return;
       Navigator.pop(context);
 
-      // Show error
+      // Show error message
       _showError("Failed to delete: ${e.toString()}");
     }
   }

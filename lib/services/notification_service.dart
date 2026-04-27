@@ -255,7 +255,7 @@ class NotificationService {
     if (!enabled) return;
 
     final minutesBefore = await reminderMinutes;
-    final now = DateTime.now();
+    final now = DateTime.now().toLocal();
 
     // Cancel existing notifications for this lecture
     await cancelLectureNotifications(lectureId);
@@ -526,7 +526,7 @@ class NotificationService {
     final lectures = await lectureService.fetchAllLecturesOnce();
 
     for (final lecture in lectures) {
-      if (lecture['isRecurring  Weekly'] == true) {
+      if (lecture['isRecurringWeekly'] == true) {
         final occurrences = _extractOccurrencesFromLecture(lecture);
         if (occurrences.isNotEmpty) {
           await scheduleLectureNotifications(
