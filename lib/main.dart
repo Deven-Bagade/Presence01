@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:presence01/pages/about_screen.dart';
 import 'package:presence01/pages/help_screen.dart';
+import 'package:presence01/services/ad_service.dart';
 import 'package:workmanager/workmanager.dart';
 import 'firebase_options.dart';
 import 'pages/splash_screen.dart';
@@ -39,6 +40,7 @@ void callbackDispatcher() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AdService().initialize();
   ErrorWidget.builder = (FlutterErrorDetails details) {
     // This hides the red screen / yellow stripes entirely
     // and just shows an empty invisible box instead.
