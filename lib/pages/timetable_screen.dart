@@ -1,7 +1,9 @@
 import 'dart:math';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
+import '../services/ad_service.dart';
 import '../services/lecture_service.dart';
 import '../services/attendance_service.dart';
 import '../widgets/attendance_dialog.dart';
@@ -22,7 +24,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
   final LectureService _lectureService = LectureService();
   final AttendanceService _attendanceService = AttendanceService();
   final NotificationService _notificationService = NotificationService();
-
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
   bool isWeekly = true;
   bool _autoMarkedOnce = false;
 
@@ -116,6 +119,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
   @override
   void initState() {
     super.initState();
+    _loadBannerAd();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!_autoMarkedOnce) {
@@ -148,8 +152,29 @@ class _TimetableScreenState extends State<TimetableScreen> {
     });
   }
 
+  void _loadBannerAd() {
+    _bannerAd = AdService().createBannerAd(
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          if (!_isDisposed) {
+            setState(() {
+              _isBannerLoaded = true;
+            });
+          }
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+          print('Banner ad failed: $error');
+        },
+      ),
+    );
+
+    _bannerAd!.load();
+  }
+
   @override
   void dispose() {
+    _bannerAd?.dispose();
     _refreshStream.close();
     super.dispose();
   }
@@ -183,6 +208,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
             fontSize: 18,
           ),
         ),
+
         actions: [
           // Add lecture button
           IconButton(
@@ -260,6 +286,15 @@ class _TimetableScreenState extends State<TimetableScreen> {
       ),
       body: Column(
         children: [
+          if (_isBannerLoaded && _bannerAd != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: SizedBox(
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _bannerAd!),
+              ),
+            ),
           _viewToggle(),
           Expanded(child: isWeekly ? _weeklyView() : _dailyView()),
         ],
@@ -562,6 +597,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
   // ─────────────────────────────────────────
   // VIEW TOGGLE
   // ─────────────────────────────────────────
+
   Widget _viewToggle() {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 12),

@@ -46,28 +46,15 @@ dependencies:
   workmanager: ^0.6.0
   awesome_notifications: ^0.10.0
   timezone: ^0.9.1
-#  flutter_native_timezone: ^2.0.0
-  permission_handler: ^11.0.0  # Exact version
+  permission_handler: ^11.0.0
   firebase_messaging: ^14.7.10
-
-
-
-
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  google_mobile_ads: ^5.1.0
   cupertino_icons: ^1.0.8
   change_app_package_name: ^1.5.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.13.1
 
